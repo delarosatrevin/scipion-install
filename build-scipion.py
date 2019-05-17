@@ -23,8 +23,20 @@ SCIPION_HOME = os.path.join(INSTALL_FOLDER, 'v2.0.0')
 print("$SCIPION_HOME=%s" % SCIPION_HOME)
 
 SCIPION_SW = os.path.join(INSTALL_FOLDER, 'SW')
-SCIPION_SW = os.path.join(INSTALL_FOLDER, 'EM')
+SCIPION_EM = os.path.join(INSTALL_FOLDER, 'EM')
 SCIPION = '%s/scipion --config %s/config/scipion.conf' % (SCIPION_HOME, SCIPION_HOME)
+
+scipionTemp = os.path.join(SCIPION_HOME, 'pyworkflow', 'templates', '%s.template')
+scipionConf = os.path.join(SCIPION_HOME, 'config', '%s.conf')
+
+replaceDict = {
+    'OPENCV': 'False',
+    'OPENCV_VER': '',
+    'CUDA_LIB': '',
+    'CUDA_BIN': '',
+    'NVCC': '',
+    'NVCC_INCLUDE': ''
+}
 
 
 def createDir(d):
@@ -42,10 +54,13 @@ def system(cmd, printOnly=False):
         os.system(cmd)
 
 
-def updateConfig(inputConf, outputConf, replaceDict):
+def updateConfig(confName, replaceDict):
     """ Update the configuration file by replacing the
     entries in the 'replaceDict'.
     """
+    inputConf = scipionTemp % confName
+    outputConf = scipionConf % confName
+
     def _updateLine(line):
         if line.strip():
             k = line.split()[0]
@@ -102,21 +117,8 @@ def _initialSetup():
     for prefix in ['protocols', 'hosts']:
         system('cp pyworkflow/templates/%s.template config/%s.conf' % (prefix, prefix))
 
-    scipionTemp = os.path.join(SCIPION_HOME, 'pyworkflow', 'templates', 'scipion.template')
-    scipionConf = os.path.join(SCIPION_HOME, 'config', 'scipion.conf')
-
-    print("Updating %s -> %s..." % (scipionTemp, scipionConf))
-    replaceDict = {
-        'OPENCV': 'False',
-        'OPENCV_VER': '',
-        'CUDA_LIB': '',
-        'CUDA_BIN': '',
-        'NVCC': '',
-        'NVCC_INCLUDE': ''
-    }
-
     # First create a basic config to build minimal requirements
-    updateConfig(scipionTemp, scipionConf, replaceDict)
+    updateConfig('scipion', replaceDict)
 
 
 def _buildBasic():
@@ -137,11 +139,11 @@ def _buildBasic():
         scipionInstall('java')
         replaceDict['JAVA_HOME'] = 'software/java8'
 
-    # Update the config again with proper Java and OpenMPI
-    updateConfig(scipionTemp, scipionConf, replaceDict)
-
 
 def _buildScipion():
+    # Update the config again with proper Java and OpenMPI
+    updateConfig('scipion', replaceDict)
+
     scipionInstall('')  # install all Python and modules
     scipionPipInstall('scons mrcfile empiar_depositor pathlib2 poster jsonschema')
 
