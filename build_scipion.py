@@ -10,6 +10,10 @@ INSTALL_FOLDER = os.path.abspath('scipion')
 
 SCIPION_GIT_REMOTE = 'https://github.com/delarosatrevin/scipion.git'
 SCIPION_GIT_BRANCH = 'sdevel2'
+
+SCIPION_GIT_REMOTE = 'https://github.com/I2PC/scipion.git'
+SCIPION_GIT_BRANCH = 'master'
+
 J = 8
 
 BUILD_OPENSSL = True
