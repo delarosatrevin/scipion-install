@@ -94,77 +94,79 @@ def scipionPipInstall(args, printOnly=False):
     scipionPython(newArgs, printOnly=printOnly)
 
 
-def _initialSetup():
-    system('rm -rf %s' % INSTALL_FOLDER)
-    createDir(INSTALL_FOLDER)
-    system('cp scipion.bashrc %s/' % INSTALL_FOLDER)
+class Build:
+    @classmethod
+    def init(cls):
+        system('rm -rf %s' % INSTALL_FOLDER)
+        createDir(INSTALL_FOLDER)
+        system('cp scipion.bashrc %s/' % INSTALL_FOLDER)
 
-    os.chdir(INSTALL_FOLDER)
+        os.chdir(INSTALL_FOLDER)
 
-    for d in ['SW', 'EM', 'TESTDATA']:
-        createDir(d)
+        for d in ['SW', 'EM', 'TESTDATA']:
+            createDir(d)
 
-    system('cd SW; ln -s ../EM em; mkdir tmp; mkdir log; cd ..;')
+        system('cd SW; ln -s ../EM em; mkdir tmp; mkdir log; cd ..;')
 
-    system("git clone %s %s" % (SCIPION_GIT_REMOTE, SCIPION_HOME))
-    os.chdir(SCIPION_HOME)
-    system("git checkout %s" % SCIPION_GIT_BRANCH)
+        system("git clone %s %s" % (SCIPION_GIT_REMOTE, SCIPION_HOME))
+        os.chdir(SCIPION_HOME)
+        system("git checkout %s" % SCIPION_GIT_BRANCH)
 
-    system("echo 'This is a TEMPORARY COPY'")
-    system(" cp ~/work/development/scipion-devel/pyworkflow/install/script.py "
-           "%s/pyworkflow/install/script.py" % SCIPION_HOME)
+        system("echo 'This is a TEMPORARY COPY'")
+        system(" cp ~/work/development/scipion-devel/pyworkflow/install/script.py "
+               "%s/pyworkflow/install/script.py" % SCIPION_HOME)
 
-    system("rm -rf software; ln -s ../SW software")
-    system("mkdir data; cd data; ln -s ../../TESTDATA tests")
+        system("rm -rf software; ln -s ../SW software")
+        system("mkdir data; cd data; ln -s ../../TESTDATA tests")
 
-    system("mkdir config")
-    for prefix in ['protocols', 'hosts']:
-        system('cp pyworkflow/templates/%s.template config/%s.conf' % (prefix, prefix))
+        system("mkdir config")
+        for prefix in ['protocols', 'hosts']:
+            system('cp pyworkflow/templates/%s.template config/%s.conf' % (prefix, prefix))
 
-    # First create a basic config to build minimal requirements
-    updateConfig('scipion', replaceDict)
+        # First create a basic config to build minimal requirements
+        updateConfig('scipion', replaceDict)
 
+    @classmethod
+    def deps(cls):
+        if BUILD_OPENSSL:
+            scipionInstall('openssl')
 
-def _buildBasic():
-    if BUILD_OPENSSL:
-        scipionInstall('openssl')
+        if BUILD_OPENMPI:
+            scipionInstall('openmpi')
+            replaceDict.update({'MPI_LIBDIR': 'software/lib',
+                                'MPI_INCLUDE': 'software/include',
+                                'MPI_BINDIR': 'software/bin'
+                                })
 
-    if BUILD_OPENMPI:
-        scipionInstall('openmpi')
-        replaceDict.update({'MPI_LIBDIR': 'software/lib',
-                            'MPI_INCLUDE': 'software/include',
-                            'MPI_BINDIR': 'software/bin'
-                            })
+        if BUILD_FFTW:
+            scipionInstall('fftw3 fftw3f')
 
-    if BUILD_FFTW:
-        scipionInstall('fftw3 fftw3f')
+        if BUILD_JAVA:
+            scipionInstall('java')
+            replaceDict['JAVA_HOME'] = 'software/java8'
 
-    if BUILD_JAVA:
-        scipionInstall('java')
-        replaceDict['JAVA_HOME'] = 'software/java8'
+            # Update the config again with proper Java and OpenMPI
+            updateConfig('scipion', replaceDict)
 
+    @classmethod
+    def scipion(cls):
+        scipionInstall('')  # install all Python and modules
+        scipionPipInstall('scons mrcfile empiar_depositor pathlib2 poster jsonschema')
 
-def _buildScipion():
-    # Update the config again with proper Java and OpenMPI
-    updateConfig('scipion', replaceDict)
+        os.chdir(INSTALL_FOLDER)
+        system("git clone --recurse-submodules https://github.com/delarosatrevin/scipion-em-plugins.git plugins")
 
-    scipionInstall('')  # install all Python and modules
-    scipionPipInstall('scons mrcfile empiar_depositor pathlib2 poster jsonschema')
-
-    os.chdir(INSTALL_FOLDER)
-    system("git clone --recurse-submodules https://github.com/delarosatrevin/scipion-em-plugins.git plugins")
-
-
-def _buildXmipp():
-    os.chdir(os.path.join(SCIPION_SW, 'tmp'))
-    system("git clone --recurse-submodules https://github.com/delarosatrevin/xmipp-bundle.git xmipp-bundle")
-    os.chdir('xmipp-bundle')
-    system('git submodule foreach "(git checkout master; git pull --prune)&"')
-    # Build xmipp
-    XMIPP = "%s python src/xmipp/xmipp" % SCIPION
-    system('%s config' % XMIPP)
-    system('%s compileAndInstall %d' % (XMIPP, J))
-    system('mv build %s/xmipp' % SCIPION_EM)
+    @classmethod
+    def xmipp(cls):
+        os.chdir(os.path.join(SCIPION_SW, 'tmp'))
+        system("git clone --recurse-submodules https://github.com/delarosatrevin/xmipp-bundle.git xmipp-bundle")
+        os.chdir('xmipp-bundle')
+        system('git submodule foreach "(git checkout master; git pull --prune)&"')
+        # Build xmipp
+        XMIPP = "%s python src/xmipp/xmipp" % SCIPION
+        system('%s config' % XMIPP)
+        system('%s compileAndInstall %d' % (XMIPP, J))
+        system('mv build %s/xmipp' % SCIPION_EM)
 
 
 if __name__ == '__main__':
