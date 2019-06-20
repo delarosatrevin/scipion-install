@@ -11,9 +11,9 @@ sys.path.append(levelUp)
 import build_scipion as bs
 
 n = len(sys.argv)
-bs.INSTALL_FOLDER = os.path.abspath(sys.argv[1] if n > 1 else '/usr/local/scipion')
+installFolder = os.path.abspath(sys.argv[1] if n > 1 else '/usr/local/scipion')
 
-print(bs.INSTALL_FOLDER)
+print("Installing in: %s" % installFolder)
 
 
 class MyBuild(bs.Build):
@@ -33,7 +33,7 @@ class MyBuild(bs.Build):
 
 
 # Initialize folder structure
-MyBuild.init(clean=True)
+MyBuild.init(installFolder, clean=True)
 
 # Install dependencies
 MyBuild.deps()
