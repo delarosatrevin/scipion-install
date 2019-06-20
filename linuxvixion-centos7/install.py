@@ -33,7 +33,7 @@ class MyBuild(bs.Build):
 
 
 # Initialize folder structure
-MyBuild.init()
+MyBuild.init(clean=True)
 
 # Install dependencies
 MyBuild.deps()

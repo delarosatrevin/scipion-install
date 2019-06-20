@@ -43,19 +43,22 @@ replaceDict = {
 }
 
 
-def createDir(d):
-    if os.path.exists(d):
-        print("ERROR: folder '%s' already exists. " % d)
-        sys.exit(1)
-    print("Creating folder '%s'..." % d)
-    os.makedirs(d)
-
-
 def system(cmd, printOnly=False):
     """ Print and execute a command. """
     print(">>> %s " % cmd.replace(SCIPION_HOME, '$SCIPION_HOME'))
     if not printOnly:
         os.system(cmd)
+
+
+def createDir(d, clean=False):
+    if os.path.exists(d):
+        if clean:
+            system("rm -rf %s" % d)
+        else:
+            print("ERROR: folder '%s' already exists. " % d)
+        sys.exit(1)
+    print("Creating folder '%s'..." % d)
+    os.makedirs(d)
 
 
 def updateConfig(confName, replaceDict):
@@ -96,9 +99,9 @@ def scipionPipInstall(args, printOnly=False):
 
 class Build:
     @classmethod
-    def init(cls):
+    def init(cls, clean=False):
         system('rm -rf %s' % INSTALL_FOLDER)
-        createDir(INSTALL_FOLDER)
+        createDir(INSTALL_FOLDER, clean=clean)
         system('cp scipion.bashrc %s/' % INSTALL_FOLDER)
 
         os.chdir(INSTALL_FOLDER)
