@@ -19,17 +19,17 @@ print("Installing in: %s" % installFolder)
 class MyBuild(bs.Build):
     @classmethod
     def deps(cls):
-        bs.system("yum -y install wget gcc-c++ glibc-headers gcc gcc-g++ cmake "
-                  "java-1.8.0-openjdk-devel.x86_64 libXft-devel.x86_64  "
-                  "openssl-devel.x86_64 libXext-devel.x86_64  libxml++.x86_64 "
-                  "libquadmath-devel.x86_64 libxslt.x86_64 openmpi-devel.x86_64  "
-                  "gsl-devel.x86_64  libX11.x86_64  gcc-gfortran.x86_64")
+        cls.system("yum -y install wget gcc-c++ glibc-headers gcc gcc-g++ cmake "
+                   "java-1.8.0-openjdk-devel.x86_64 libXft-devel.x86_64  "
+                   "openssl-devel.x86_64 libXext-devel.x86_64  libxml++.x86_64 "
+                   "libquadmath-devel.x86_64 libxslt.x86_64 openmpi-devel.x86_64  "
+                   "gsl-devel.x86_64  libX11.x86_64  gcc-gfortran.x86_64")
 
     @classmethod
     def copyConfig(cls, *names):
         for confName in names:
-            bs.system("cp %s/%s.conf %s"
-                      % (here, confName, bs.scipionConf % confName))
+            cls.system("cp %s/%s.conf %s"
+                       % (here, confName, bs.scipionConf % confName))
 
 
 # Initialize folder structure
