@@ -30,15 +30,18 @@ class Build:
     @classmethod
     def initVars(cls, installFolder):
         cls.INSTALL_FOLDER = installFolder
-        SCIPION_HOME = os.path.join(installFolder, 'v2.0.0')
-        print("$SCIPION_HOME=%s" % SCIPION_HOME)
+        cls.SCIPION_HOME = os.path.join(installFolder, 'v2.0.0')
+        print("$SCIPION_HOME=%s" % cls.SCIPION_HOME)
 
         cls.SCIPION_SW = os.path.join(cls.INSTALL_FOLDER, 'SW')
         cls.SCIPION_EM = os.path.join(cls.INSTALL_FOLDER, 'EM')
-        cls.SCIPION = '%s/scipion --config %s/config/scipion.conf' % (SCIPION_HOME, SCIPION_HOME)
+        cls.SCIPION = ('%s/scipion --config %s/config/scipion.conf'
+                       % (cls.SCIPION_HOME, cls.SCIPION_HOME))
 
-        cls.SCIPION_TEMP = os.path.join(SCIPION_HOME, 'pyworkflow', 'templates', '%s.template')
-        cls.SCIPION_CONF = os.path.join(SCIPION_HOME, 'config', '%s.conf')
+        cls.SCIPION_TEMP = os.path.join(cls.SCIPION_HOME,
+                                        'pyworkflow', 'templates', '%s.template')
+        cls.SCIPION_CONF = os.path.join(cls.SCIPION_HOME,
+                                        'config', '%s.conf')
 
     replaceDict = {
         'OPENCV': 'False',
