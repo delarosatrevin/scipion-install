@@ -29,7 +29,7 @@ class MyBuild(bs.Build):
     def copyConfig(cls, *names):
         for confName in names:
             cls.system("cp %s/%s.conf %s"
-                       % (here, confName, bs.scipionConf % confName))
+                       % (here, confName, cls.SCIPION_CONF % confName))
 
 
 # Initialize folder structure
