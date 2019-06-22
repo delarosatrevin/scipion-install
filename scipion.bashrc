@@ -34,4 +34,6 @@ alias xis='xmipp_image_statistics'
 alias xih='xmipp_image_header'
 alias xmu='xmipp_metadata_utilities'
 
+alias update_scipion2='bash $SCIPION_ROOT/update_scipion2.x'
+
 

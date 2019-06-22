@@ -41,6 +41,14 @@ MyBuild.deps()
 # Overwrite some configuration files
 MyBuild.copyConfig('scipion', 'hosts')
 
+# Copy update script
+MyBuild.system('cp %s/update_scipion2.x %s/' % (here, installFolder))
+
+# Add alias to /etc/bashrc
+MyBuild.system('printf "\n# Alias to load Scipion2\n'
+               'alias load_scipion2=\'. %s/scipion.bashrc\'\n\n" '
+               '>> /etc/bashrc' % installFolder)
+
 # Build Scipion
 MyBuild.scipion()
 
