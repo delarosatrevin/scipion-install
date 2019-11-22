@@ -23,7 +23,7 @@ class MyBuild(bs.Build):
                    "libxft-dev libssl-dev libxext-dev libxml2-dev libreadline6 "
                    "libquadmath0 libxslt1-dev libopenmpi-dev openmpi-bin  "
                    "libxss-dev libgsl0-dev libx11-dev gfortran libfreetype6-dev "
-                   "libopencv-dev curl git")
+                   "libbz2-dev libopencv-dev curl git")
 
     @classmethod
     def copyConfig(cls, *names):
