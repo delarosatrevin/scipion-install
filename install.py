@@ -210,8 +210,7 @@ class ScipionInstaller:
 
         # Install some deps via conda
         self.condaInstall("libtiff=4.1 fftw=3.3.8 hdf5=1.12 openjdk=8 "
-                          "openmpi=4.0.4 cudatoolkit=10.1 "
-                          "numpy scipy matplotlib pillow psutil",
+                          "cudatoolkit=10.1 numpy scipy matplotlib pillow psutil",
                           channel='conda-forge')
 
         # Install some required deps via pip
@@ -242,7 +241,6 @@ class ScipionInstaller:
 
     # ------ Either build Xmipp or install binaries -----------------------
     def buildXmipp(self):
-        self.createDir(self.XMIPP_BUNDLE, clean=True)
         self.clone('xmipp', branch=XMIPP_BRANCH, user=XMIPP_USER,
                    outputName=self.XMIPP_BUNDLE)
 
@@ -267,12 +265,19 @@ class ScipionInstaller:
 
         os.system('bash %s' % xmippInstallScript)
 
-    def installXmipp(self):
+    def installXmipp(self, build=False):
         self.createDir(self.XMIPP_BUNDLE, clean=True)
-        xmippBin = 'xmipp-v3.20.07b1.tgz'
-        os.system('cd %s; '
-                  'wget https://github.com/delarosatrevin/scipion-install-bin/raw/master/%s; '
-                  'tar -xzf %s' % (self.XMIPP_BUNDLE, xmippBin, xmippBin))
+
+        if build:
+            self.buildXmipp()
+        else:
+            xmippBin = 'xmipp-v3.20.07b1.tgz'
+            os.system('cd %s; '
+                      'wget https://github.com/delarosatrevin/scipion-install-bin/raw/master/%s; '
+                      'tar -xzf %s' % (self.XMIPP_BUNDLE, xmippBin, xmippBin))
+        # Install openmpi now, to not interfere with Xmipp compilation
+        self.condaInstall("openmpi=4.0.4",
+                          channel='conda-forge')
 
 if __name__ == '__main__':
     # FIXME: Pass install dir as argument
@@ -294,8 +299,5 @@ if __name__ == '__main__':
         si.installPlugins()
         si.createConfig()
 
-    if buildXmipp:
-        si.buildXmipp()
-    else:
-        si.installXmipp()
+    si.installXmipp(buildXmipp)
 
