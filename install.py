@@ -45,10 +45,7 @@ class ScipionInstaller:
         self.SCIPION = ('%s/scipion --config %s/config/scipion.conf'
                        % (self.SCIPION_HOME, self.SCIPION_HOME))
 
-        self.SCIPION_TEMP = os.path.join(self.SCIPION_HOME,
-                                        'pyworkflow', 'templates', '%s.template')
-        self.SCIPION_CONF = os.path.join(self.SCIPION_HOME,
-                                        'config', '%s.conf')
+        self.SCIPION_CONF = os.path.join(self.SCIPION_HOME, 'config')
 
         self.XMIPP_BUNDLE = os.path.join(self.SCIPION_SRC, 'xmipp-bundle')
 
