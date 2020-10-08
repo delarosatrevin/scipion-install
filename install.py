@@ -25,9 +25,10 @@ BUILD_JAVA = True
 
 class ScipionInstaller:
 
-    def __init__(self, installFolder=None, onlyPrint=False):
+    def __init__(self, installFolder=None, onlyPrint=False, useHttps=False):
         self.INSTALL_FOLDER = os.path.abspath(installFolder or os.getcwd())
         self.onlyPrint = onlyPrint
+        self.useHttps = useHttps
 
         print("Install folder: ", self.INSTALL_FOLDER)
 
@@ -157,7 +158,7 @@ class ScipionInstaller:
         user = user or GITHUB_USER
         output = outputName if outputName else os.path.join(outputDir, name)
 
-        if devel:
+        if not self.useHttps:
             url = 'git@github.com:%s/%s.git' % (user, name)
         else:
             url = 'https://github.com/%s/%s.git' % (user, name)
@@ -285,7 +286,9 @@ if __name__ == '__main__':
 
     installFolder = sys.argv[1]
 
-    si = ScipionInstaller(installFolder)
+    useHttps = '--https' in sys.argv
+
+    si = ScipionInstaller(installFolder, useHttps=useHttps)
 
     onlyXmipp = '--only-xmipp' in sys.argv
     buildXmipp = '--build-xmipp' in sys.argv
