@@ -5,10 +5,13 @@ DIR="$( dirname $ABS)"
 
 export SCIPION_ROOT=$DIR
 export SCIPION_HOME=$SCIPION_ROOT
+export SCIPION_DOMAIN=pwem
+export SCIPION_TESTS_CMD='scipion test'
 
 export SCIPION_SW=$SCIPION_ROOT/conda
 export SCIPION_EM=$SCIPION_ROOT/EM
 export SCIPION_CONFIG=$SCIPION_HOME/config/scipion.conf
+
 
 # Needed by some plugins
 export EM_ROOT=$SCIPION_EM

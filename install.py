@@ -10,7 +10,7 @@ here = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 GITHUB_USER = 'scipion-em'
 DEFAULT_BRANCH = 'master'
 
-XMIPP_BRANCH = 'release-20.07'
+XMIPP_BRANCH = 'master'
 XMIPP_USER = 'I2PC'
 
 J = 8
@@ -58,22 +58,22 @@ class ScipionInstaller:
         'NVCC': '',
         'NVCC_INCLUDE': ''
     }
-
     PLUGINS_LIST = [
         "scipion-em-appion",
         "scipion-em-atsas",
         "scipion-em-bamfordlab",
         "scipion-em-bsoft",
+        "scipion-em-cistem",
         "scipion-em-cryoef",
         "scipion-em-eman2",
         "scipion-em-empiar",
         "scipion-em-emxlib",
+        "scipion-em-facilities",
         "scipion-em-gautomatch",
         "scipion-em-gctf",
-        "scipion-em-grigoriefflab",
         "scipion-em-imagic",
         "scipion-em-imod",
-        "scipion-em-ispyb",
+        #"scipion-em-ispyb",
         "scipion-em-localrec",
         "scipion-em-locscale",
         "scipion-em-motioncorr",
@@ -81,7 +81,7 @@ class ScipionInstaller:
 
         "scipion-em-relion",
         "scipion-em-resmap",
-        "scipion-em-simple",
+        #"scipion-em-simple",
         #"scipion-em-sll",
         "scipion-em-sphire",
         "scipion-em-spider",
@@ -95,6 +95,7 @@ class ScipionInstaller:
         "scipion-em-phenix",
         "scipion-em-powerfit",
     ]
+
 
     def system(self, cmd):
         """ Print and execute a command. """
@@ -270,7 +271,7 @@ class ScipionInstaller:
         if build:
             self.buildXmipp()
         else:
-            xmippBin = 'xmipp-v3.20.07b1.tgz'
+            xmippBin = 'xmipp-v3.20.07.tgz'
             os.system('cd %s; '
                       'wget https://github.com/delarosatrevin/scipion-install-bin/raw/master/%s; '
                       'tar -xzf %s' % (self.XMIPP_BUNDLE, xmippBin, xmippBin))
