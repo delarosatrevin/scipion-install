@@ -238,6 +238,7 @@ class ScipionInstaller:
         print("Copying config files from: ", files)
         self.system('cp %s/scipion.bashrc %s/' % (files, self.SCIPION_HOME))
         self.system('cp %s/*.conf %s/' % (files, self.SCIPION_CONF))
+        self.system('cp %s/update.py %s/' % (files, self.SCIPION_HOME))
 
     # ------ Either build Xmipp or install binaries -----------------------
     def buildXmipp(self):
