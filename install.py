@@ -209,7 +209,9 @@ class ScipionInstaller:
 
         # Install some deps via conda
         self.condaInstall("libtiff=4.1 fftw=3.3.8 hdf5=1.12 openjdk=8 "
-                          "cudatoolkit=10.1 numpy=1.18.4 scipy matplotlib "
+                          "cudatoolkit=10.1 numpy=1.18.4 scipy "
+                          "bibtexparser=1.2.0 configparser=5.0.0 "
+                          "matplotlib=3.2.2 requests=2.25.1 "
                           "pillow=7.1.2 psutil=5.7.0",
                           channel='conda-forge')
 
