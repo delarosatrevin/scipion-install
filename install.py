@@ -96,7 +96,6 @@ class ScipionInstaller:
         "scipion-em-powerfit",
     ]
 
-
     def system(self, cmd):
         """ Print and execute a command. """
         print(" %s " % cmd.replace(self.SCIPION_HOME, '$SCIPION_HOME'))
@@ -282,6 +281,7 @@ class ScipionInstaller:
         self.condaInstall("openmpi=4.0.4",
                           channel='conda-forge')
 
+
 if __name__ == '__main__':
     # FIXME: Pass install dir as argument
     if len(sys.argv) < 2:
@@ -291,8 +291,11 @@ if __name__ == '__main__':
     installFolder = sys.argv[1]
 
     useHttps = '--https' in sys.argv
+    onlyPrint = '--only-print' in sys.argv
 
-    si = ScipionInstaller(installFolder, useHttps=useHttps)
+    si = ScipionInstaller(installFolder,
+                          useHttps=useHttps,
+                          onlyPrint=onlyPrint)
 
     onlyXmipp = '--only-xmipp' in sys.argv
     buildXmipp = '--build-xmipp' in sys.argv
