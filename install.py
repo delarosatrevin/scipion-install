@@ -29,11 +29,14 @@ class ScipionInstaller:
         self.INSTALL_FOLDER = os.path.abspath(installFolder or os.getcwd())
         self.onlyPrint = onlyPrint
         self.useHttps = useHttps
-
-        print("Install folder: ", self.INSTALL_FOLDER)
+        self.commands = []
 
         self.SCIPION_HOME = self.INSTALL_FOLDER
-        print("export $SCIPION_HOME=%s" % self.SCIPION_HOME)
+        self.commands = [
+            "export SCIPION_HOME=%s" % self.SCIPION_HOME,
+            'export PATH=$SCIPION_HOME/conda/bin:$PATH',
+            'export LD_LIBRARY_PATH=$SCIPION_HOME/conda/lib:$LD_LIBRARY_PATH'
+            ]
 
         #cls.ENV_CREATE = 'python -m virtualenv --python=python3 env'
         self.ENV_ACTIVATE = ('export PATH=%s/conda/bin:$PATH; '
@@ -98,13 +101,15 @@ class ScipionInstaller:
 
     def system(self, cmd):
         """ Print and execute a command. """
-        print(" %s " % cmd.replace(self.SCIPION_HOME, '$SCIPION_HOME'))
-        if not self.onlyPrint:
-            os.system(cmd)
+        cmdR = cmd.replace(self.SCIPION_HOME, '$SCIPION_HOME')
+        self.commands.append(cmdR)
+        # print(cmdR)
+        # if not self.onlyPrint:
+        #     os.system(cmd)
 
     def conda(self, args):
         """ Execute a conda command. Load the environment if needed. """
-        self.system('%s && conda %s' % (self.ENV_ACTIVATE, args))
+        self.system('conda %s' % args)
 
     def removeDir(self, d):
         self.system("rm -rf %s" % d)
@@ -140,7 +145,7 @@ class ScipionInstaller:
             fo.close()
 
     def pipInstall(self, args):
-        newArgs = '%s && python -m pip install %s' % (self.ENV_ACTIVATE, args)
+        newArgs = 'python -m pip install %s' % args
         self.system(newArgs)
 
     def condaInstall(self, args, channel=''):
@@ -209,13 +214,13 @@ class ScipionInstaller:
         # Install some deps via conda
         self.condaInstall("libtiff=4.1 fftw=3.3.8 hdf5=1.12 openjdk=8 "
                           "cudatoolkit=10.1 numpy=1.18.4 scipy "
-                          "bibtexparser=1.2.0 configparser=5.0.0 "
+                          "configparser=5.0.0 "
                           "matplotlib=3.2.2 requests=2.25.1 "
                           "pillow=7.1.2 psutil=5.7.0",
                           channel='conda-forge')
 
         # Install some required deps via pip
-        self.pipInstall('scons mrcfile empiar_depositor pathlib2 poster jsonschema')
+        self.pipInstall('scons mrcfile empiar_depositor pathlib2 poster3 jsonschema bibtexparser==1.2.0')
 
     def installCore(self):
         for corePlugin in ['scipion-pyworkflow', 'scipion-em', 'scipion-app']:
@@ -229,14 +234,10 @@ class ScipionInstaller:
         self.installFromSource('scipion-em-xmipp', 'plugins',
                                branch=XMIPP_BRANCH, clean=True,
                                user=XMIPP_USER)
-        # Xmipp plugin is special since it is located at I2PC
-        self.installFromSource('scipion-em-xmipp', 'plugins',
-                               branch=XMIPP_BRANCH, clean=True,
-                               user=XMIPP_USER)
 
     def createConfig(self):
         files = os.path.join(here, 'files')
-        print("Copying config files from: ", files)
+        # print("Copying config files from: ", files)
         self.system('cp %s/scipion.bashrc %s/' % (files, self.SCIPION_HOME))
         self.system('cp %s/*.conf %s/' % (files, self.SCIPION_CONF))
         self.system('cp %s/update.py %s/' % (files, self.SCIPION_HOME))
@@ -265,7 +266,7 @@ class ScipionInstaller:
             python ./xmipp install
             """ % (self.ENV_ACTIVATE, self.XMIPP_BUNDLE, XMIPP_BRANCH, J))
 
-        self.system('bash %s' % xmippInstallScript)
+        self.system('bash -ex %s' % xmippInstallScript)
 
     def installXmipp(self, build=False):
         self.createDir(self.XMIPP_BUNDLE, clean=True)
@@ -293,10 +294,7 @@ if __name__ == '__main__':
     useHttps = '--https' in sys.argv
     onlyPrint = '--only-print' in sys.argv
 
-    si = ScipionInstaller(installFolder,
-                          onlyPrint=onlyPrint,
-                          useHttps=useHttps
-                          )
+    si = ScipionInstaller(installFolder, useHttps=useHttps)
 
     onlyXmipp = '--only-xmipp' in sys.argv
     buildXmipp = '--build-xmipp' in sys.argv
@@ -309,4 +307,18 @@ if __name__ == '__main__':
         si.createConfig()
 
     si.installXmipp(buildXmipp)
+
+    cmdStr = '\n'.join(si.commands)
+
+    if onlyPrint:
+        print(cmdStr)
+    else:
+        installScript = os.path.join(here, 'install_script.sh')
+
+        with open(installScript, 'w') as f:
+            f.write(cmdStr + '\n')
+
+        os.system('bash -ex %s' % installScript)
+
+
 
