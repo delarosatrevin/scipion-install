@@ -33,7 +33,7 @@ class ScipionInstaller:
         print("Install folder: ", self.INSTALL_FOLDER)
 
         self.SCIPION_HOME = self.INSTALL_FOLDER
-        print("$SCIPION_HOME=%s" % self.SCIPION_HOME)
+        print("export $SCIPION_HOME=%s" % self.SCIPION_HOME)
 
         #cls.ENV_CREATE = 'python -m virtualenv --python=python3 env'
         self.ENV_ACTIVATE = ('export PATH=%s/conda/bin:$PATH; '
@@ -265,7 +265,7 @@ class ScipionInstaller:
             python ./xmipp install
             """ % (self.ENV_ACTIVATE, self.XMIPP_BUNDLE, XMIPP_BRANCH, J))
 
-        os.system('bash %s' % xmippInstallScript)
+        self.system('bash %s' % xmippInstallScript)
 
     def installXmipp(self, build=False):
         self.createDir(self.XMIPP_BUNDLE, clean=True)
@@ -274,7 +274,7 @@ class ScipionInstaller:
             self.buildXmipp()
         else:
             xmippBin = 'xmipp-v3.20.07.tgz'
-            os.system('cd %s; '
+            self.system('cd %s; '
                       'wget https://github.com/delarosatrevin/scipion-install-bin/raw/master/%s; '
                       'tar -xzf %s' % (self.XMIPP_BUNDLE, xmippBin, xmippBin))
         # Install openmpi now, to not interfere with Xmipp compilation
@@ -294,8 +294,9 @@ if __name__ == '__main__':
     onlyPrint = '--only-print' in sys.argv
 
     si = ScipionInstaller(installFolder,
-                          useHttps=useHttps,
-                          onlyPrint=onlyPrint)
+                          onlyPrint=onlyPrint,
+                          useHttps=useHttps
+                          )
 
     onlyXmipp = '--only-xmipp' in sys.argv
     buildXmipp = '--build-xmipp' in sys.argv
