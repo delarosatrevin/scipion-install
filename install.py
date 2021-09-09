@@ -2,6 +2,7 @@
 
 import os
 import sys
+import argparse
 
 here = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 
@@ -25,10 +26,11 @@ BUILD_JAVA = True
 
 class ScipionInstaller:
 
-    def __init__(self, installFolder=None, onlyPrint=False, useHttps=False):
+    def __init__(self, installFolder=None, onlyPrint=False, useHttps=False, buildXmipp=False):
         self.INSTALL_FOLDER = os.path.abspath(installFolder or os.getcwd())
         self.onlyPrint = onlyPrint
         self.useHttps = useHttps
+        self.buildXmipp = buildXmipp
         self.commands = []
 
         self.SCIPION_HOME = self.INSTALL_FOLDER
@@ -197,7 +199,12 @@ class ScipionInstaller:
 
     def installConda(self):
         # Download and install miniconda
-        minicondaSh = 'Miniconda3-latest-Linux-x86_64.sh'
+        # https://repo.anaconda.com/miniconda/Miniconda3-py38_4.9.2-Linux-x86_64.sh
+
+        # JMRT (2021-09-08) Do no use the last miniconda installer due to
+        # the major Python version and the pined versions of pyworkflow's requirements
+        #minicondaSh = 'Miniconda3-latest-Linux-x86_64.sh'
+        minicondaSh = 'Miniconda3-py38_4.9.2-Linux-x86_64.sh'
         outputSh = os.path.join(self.SCIPION_TMP, minicondaSh)
         self.system("wget https://repo.continuum.io/miniconda/%s -O %s"
                     % (minicondaSh, outputSh))
@@ -218,6 +225,10 @@ class ScipionInstaller:
                           "matplotlib=3.2.2 requests=2.25.1 "
                           "pillow=7.1.2 psutil=5.7.0",
                           channel='conda-forge')
+
+        if not self.buildXmipp:
+            # If we are not building xmipp, we can already install openmpi from the conda channel
+            self.condaInstall("openmpi=4.0.4 mpi4py", channel='conda-forge')
 
         # Install some required deps via pip
         self.pipInstall('scons mrcfile empiar_depositor pathlib2 poster3 jsonschema bibtexparser==1.2.0')
@@ -273,44 +284,66 @@ class ScipionInstaller:
 
         if build:
             self.buildXmipp()
+            # Install openmpi now, to not interfere with Xmipp compilation
+            self.condaInstall("openmpi=4.0.4", channel='conda-forge')
         else:
             xmippBin = 'xmipp-v3.20.07.tgz'
             self.system('cd %s; '
                       'wget https://github.com/delarosatrevin/scipion-install-bin/raw/master/%s; '
                       'tar -xzf %s' % (self.XMIPP_BUNDLE, xmippBin, xmippBin))
-        # Install openmpi now, to not interfere with Xmipp compilation
-        self.condaInstall("openmpi=4.0.4",
-                          channel='conda-forge')
+
+
+
+def get_parser():
+    """ Return the argparse parser, so we can get the arguments """
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    add = parser.add_argument  # shortcut
+
+    add('installFolder', metavar='INSTALL_FOLDER',
+        help='Installation folder.')
+    add('--https', action='store_true',
+        help='Use https URL to retrieve repositories')
+    add('--only_print', action='store_true',
+        help='Only print installation commands')
+    add('--only_xmipp', action='store_true',
+        help='Only install Xmipp. ')
+    add('--build_xmipp', action='store_true',
+        help='Build Xmipp (usually to generate a binary)')
+    add('--skip_xmipp', action='store_true',
+        help='Install Scipion without Xmipp (useful for Mac)')
+
+    # g = parser.add_mutually_exclusive_group()
+    # g.add_argument('--output_text', action='store_true', help="Write all set items to a text file.")
+    # g.add_argument('--print', action='store_true', help="Print all set's item files to a text file.")
+    # g.add_argument('--copy', action='store_true', help="Copy all set's item files to a text file.")
+
+    #
+    # add('output', metavar='OUTPUT', help='Output file or folder.')
+
+    return parser
 
 
 if __name__ == '__main__':
-    # FIXME: Pass install dir as argument
-    if len(sys.argv) < 2:
-        print("Please provide INSTALL_FOLDER as first argument")
-        sys.exit(1)
+    args = get_parser().parse_args()
 
-    installFolder = sys.argv[1]
+    si = ScipionInstaller(args.installFolder,
+                          useHttps=args.https)
 
-    useHttps = '--https' in sys.argv
-    onlyPrint = '--only-print' in sys.argv
 
-    si = ScipionInstaller(installFolder, useHttps=useHttps)
-
-    onlyXmipp = '--only-xmipp' in sys.argv
-    buildXmipp = '--build-xmipp' in sys.argv
-
-    if not onlyXmipp:
+    if not args.only_xmipp:
         si.createFolders()
         si.installConda()
         si.installCore()
         si.installPlugins()
         si.createConfig()
 
-    si.installXmipp(buildXmipp)
+    if not args.skip_xmipp:
+        si.installXmipp(args.build_xmipp)
 
     cmdStr = '\n'.join(si.commands)
 
-    if onlyPrint:
+    if args.only_print:
         print(cmdStr)
     else:
         installScript = os.path.join(here, 'install_script.sh')
