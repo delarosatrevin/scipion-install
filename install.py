@@ -3,6 +3,8 @@
 import os
 import sys
 import argparse
+import subprocess
+
 
 here = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 
@@ -23,9 +25,7 @@ BUILD_JAVA = True
 
 # =============================================================================s
 
-
 class ScipionInstaller:
-
     def __init__(self, installFolder=None, onlyPrint=False, useHttps=False, buildXmipp=False):
         self.INSTALL_FOLDER = os.path.abspath(installFolder or os.getcwd())
         self.onlyPrint = onlyPrint
@@ -40,7 +40,6 @@ class ScipionInstaller:
             'export LD_LIBRARY_PATH=$SCIPION_HOME/conda/lib:$LD_LIBRARY_PATH'
             ]
 
-        #cls.ENV_CREATE = 'python -m virtualenv --python=python3 env'
         self.ENV_ACTIVATE = ('export PATH=%s/conda/bin:$PATH; '
                              'export LD_LIBRARY_PATH=%s/conda/lib:$LD_LIBRARY_PATH'
                              % (self.SCIPION_HOME, self.SCIPION_HOME))
@@ -73,7 +72,7 @@ class ScipionInstaller:
         "scipion-em-eman2",
         "scipion-em-empiar",
         "scipion-em-emxlib",
-        "scipion-em-facilities",
+        #"scipion-em-facilities",
         "scipion-em-gautomatch",
         "scipion-em-gctf",
         "scipion-em-imagic",
@@ -105,9 +104,6 @@ class ScipionInstaller:
         """ Print and execute a command. """
         cmdR = cmd.replace(self.SCIPION_HOME, '$SCIPION_HOME')
         self.commands.append(cmdR)
-        # print(cmdR)
-        # if not self.onlyPrint:
-        #     os.system(cmd)
 
     def conda(self, args):
         """ Execute a conda command. Load the environment if needed. """
@@ -174,7 +170,6 @@ class ScipionInstaller:
 
     def installFromSource(self, name, srcSubFolder, branch=None, **kwargs):
         clean = kwargs.get('clean', False)
-
         outputDir = os.path.join(self.SCIPION_SRC, srcSubFolder)
         branch = branch or DEFAULT_BRANCH
         outputSrcDir = os.path.join(outputDir, name)
@@ -188,7 +183,7 @@ class ScipionInstaller:
         devel = kwargs.get('devel', True)
         self.clone(name, outputDir=outputDir, branch=branch,
                    user=user, devel=devel)
-        self.pipInstall('-e %s/%s' % (outputDir, name))
+        self.pipInstall(f'-e {outputSrcDir}')
 
     def createFolders(self):
         for d in [self.SCIPION_HOME,
@@ -201,30 +196,38 @@ class ScipionInstaller:
         # Download and install miniconda
         # https://repo.anaconda.com/miniconda/Miniconda3-py38_4.9.2-Linux-x86_64.sh
 
-        # JMRT (2021-09-08) Do no use the last miniconda installer due to
+        # JMRT (2021-09-08) Do not use the last miniconda installer due to
         # the major Python version and the pined versions of pyworkflow's requirements
         #minicondaSh = 'Miniconda3-latest-Linux-x86_64.sh'
-        minicondaSh = 'Miniconda3-py38_4.9.2-Linux-x86_64.sh'
+        isMac = sys.platform == 'darwin'
+        if isMac:
+            minicondaSh = 'Miniconda3-py38_4.9.2-MacOSX-x86_64.sh'
+        else:
+            minicondaSh = 'Miniconda3-py38_4.9.2-Linux-x86_64.sh'
+
         outputSh = os.path.join(self.SCIPION_TMP, minicondaSh)
         self.system("wget https://repo.continuum.io/miniconda/%s -O %s"
                     % (minicondaSh, outputSh))
         self.system("bash -- %s -b -p %s/conda" % (outputSh, self.SCIPION_HOME))
 
         # Fix fonts
-        self.conda('remove tk --force -y')  # remove bad looking tk
-        tkFile = 'tk-8.6.10-h14c3975_1005.tar.bz2'
-        outputTk = os.path.join(self.SCIPION_TMP, tkFile)
-        self.system("wget https://anaconda.org/scipion/tk/8.6.10/download/linux-64/%s -O %s"
-                    % (tkFile, outputTk))
-        self.condaInstall(outputTk)
+        if not isMac:
+            self.conda('remove tk --force -y')  # remove bad looking tk
+            tkFile = 'tk-8.6.10-h14c3975_1005.tar.bz2'
+            outputTk = os.path.join(self.SCIPION_TMP, tkFile)
+            self.system("wget https://anaconda.org/scipion/tk/8.6.10/download/linux-64/%s -O %s"
+                        % (tkFile, outputTk))
+            self.condaInstall(outputTk)
 
         # Install some deps via conda
         self.condaInstall("libtiff=4.1 fftw=3.3.8 hdf5=1.12 openjdk=8 "
-                          "cudatoolkit=10.1 numpy=1.19.2 scipy "
-                          "configparser=5.0.0 "
+                          "numpy=1.19.2 scipy configparser=5.0.0 "
                           "matplotlib=3.2.2 requests=2.25.1 "
                           "pillow=7.1.2 psutil=5.7.0",
                           channel='conda-forge')
+
+        if not isMac:
+            self.condaInstall('cudatoolkit=10.1', channel='conda-forge')
 
         if not self.buildXmipp:
             # If we are not building xmipp, we can already install openmpi from the conda channel
@@ -234,8 +237,9 @@ class ScipionInstaller:
         self.pipInstall('scons mrcfile empiar_depositor pathlib2 poster3 jsonschema bibtexparser==1.2.0')
 
     def installCore(self):
-        for corePlugin in ['scipion-pyworkflow', 'scipion-em', 'scipion-app']:
-            self.installFromSource(corePlugin, 'core', clean=True)
+        self.installFromSource('scipion-pyworkflow', 'core', clean=True)
+        self.installFromSource('scipion-em', 'core', clean=True)
+        self.installFromSource('scipion-app', 'core', clean=True)
 
     def installPlugins(self):
         for plugin in self.PLUGINS_LIST:
@@ -293,7 +297,6 @@ class ScipionInstaller:
                       'tar -xzf %s' % (self.XMIPP_BUNDLE, xmippBin, xmippBin))
 
 
-
 def get_parser():
     """ Return the argparse parser, so we can get the arguments """
 
@@ -312,30 +315,23 @@ def get_parser():
         help='Build Xmipp (usually to generate a binary)')
     add('--skip_xmipp', action='store_true',
         help='Install Scipion without Xmipp (useful for Mac)')
-
-    # g = parser.add_mutually_exclusive_group()
-    # g.add_argument('--output_text', action='store_true', help="Write all set items to a text file.")
-    # g.add_argument('--print', action='store_true', help="Print all set's item files to a text file.")
-    # g.add_argument('--copy', action='store_true', help="Copy all set's item files to a text file.")
-
-    #
-    # add('output', metavar='OUTPUT', help='Output file or folder.')
+    add('--skip_plugins', action='store_true',
+        help="Do not install the plugins, just core ones. ")
 
     return parser
 
 
 if __name__ == '__main__':
     args = get_parser().parse_args()
-
     si = ScipionInstaller(args.installFolder,
                           useHttps=args.https)
-
 
     if not args.only_xmipp:
         si.createFolders()
         si.installConda()
         si.installCore()
-        si.installPlugins()
+        if not args.skip_plugins:
+            si.installPlugins()
         si.createConfig()
 
     if not args.skip_xmipp:
@@ -349,9 +345,15 @@ if __name__ == '__main__':
         installScript = os.path.join(here, 'install_script.sh')
 
         with open(installScript, 'w') as f:
-            f.write(cmdStr + '\n')
+            f.write(f'printenv\n{cmdStr}\n')
 
-        os.system('bash -ex %s' % installScript)
+        env = {}
+        for k, v in os.environ.items():
+            if k.startswith('CONDA'):
+                continue
+            env[k] = v
+
+        subprocess.run(['bash', '-ex', installScript], env=env)
 
 
 
