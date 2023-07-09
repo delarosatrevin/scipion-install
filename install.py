@@ -237,9 +237,11 @@ class ScipionInstaller:
         self.pipInstall('scons mrcfile empiar_depositor pathlib2 poster3 jsonschema bibtexparser==1.2.0')
 
     def installCore(self):
+        self.installFromSource('emtools', 'core', cleean=True, user='3dem', branch='main')
         self.installFromSource('scipion-pyworkflow', 'core', clean=True)
         self.installFromSource('scipion-em', 'core', clean=True)
         self.installFromSource('scipion-app', 'core', clean=True)
+        self.installFromSource('emhub', 'core', clean=True, user='3dem', branch='main')
 
     def installPlugins(self):
         for plugin in self.PLUGINS_LIST:
@@ -305,8 +307,8 @@ def get_parser():
 
     add('installFolder', metavar='INSTALL_FOLDER',
         help='Installation folder.')
-    add('--https', action='store_true',
-        help='Use https URL to retrieve repositories')
+    add('--git_clone', choices=['https', 'ssh'], default='https',
+        help="What method to use for the 'git clone' command")
     add('--only_print', action='store_true',
         help='Only print installation commands')
     add('--only_xmipp', action='store_true',
@@ -323,8 +325,13 @@ def get_parser():
 
 if __name__ == '__main__':
     args = get_parser().parse_args()
+
+    if not args.only_print and os.path.exists(args.installFolder):
+        if os.listdir(args.installFolder):
+            raise Exception(f"ERROR: folder '{args.installFolder}' is not empty.")
+
     si = ScipionInstaller(args.installFolder,
-                          useHttps=args.https)
+                          useHttps=args.git_clone == 'https')
 
     if not args.only_xmipp:
         si.createFolders()
