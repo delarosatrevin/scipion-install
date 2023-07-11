@@ -223,7 +223,7 @@ class ScipionInstaller:
         self.condaInstall("libtiff=4.1 fftw=3.3.8 hdf5=1.12 openjdk=8 "
                           "numpy=1.19.2 scipy configparser=5.0.0 "
                           "matplotlib=3.2.2 requests=2.25.1 "
-                          "pillow=7.1.2 psutil=5.7.0",
+                          "pillow=9.2.0 psutil=5.7.0",
                           channel='conda-forge')
 
         if not isMac:
@@ -241,7 +241,7 @@ class ScipionInstaller:
         self.installFromSource('scipion-pyworkflow', 'core', clean=True)
         self.installFromSource('scipion-em', 'core', clean=True)
         self.installFromSource('scipion-app', 'core', clean=True)
-        self.installFromSource('emhub', 'core', clean=True, user='3dem', branch='main')
+        self.installFromSource('emhub', 'core', clean=True, user='3dem', branch='devel')
 
     def installPlugins(self):
         for plugin in self.PLUGINS_LIST:
@@ -255,7 +255,7 @@ class ScipionInstaller:
     def createConfig(self):
         files = os.path.join(here, 'files')
         # print("Copying config files from: ", files)
-        self.system('cp %s/scipion.bashrc %s/' % (files, self.SCIPION_HOME))
+        self.system('cp %s/bashrc %s/' % (files, self.SCIPION_HOME))
         self.system('cp %s/*.conf %s/' % (files, self.SCIPION_CONF))
         self.system('cp %s/update.py %s/' % (files, self.SCIPION_HOME))
 
