@@ -326,12 +326,12 @@ def get_parser():
 if __name__ == '__main__':
     args = get_parser().parse_args()
 
-    if not args.only_print and os.path.exists(args.installFolder):
-        if os.listdir(args.installFolder):
-            raise Exception(f"ERROR: folder '{args.installFolder}' is not empty.")
+    installFolder = args.installFolder
+    if not args.only_print and os.path.exists(installFolder):
+        if os.listdir(installFolder):
+            raise Exception(f"ERROR: folder '%s' is not empty." % installFolder)
 
-    si = ScipionInstaller(args.installFolder,
-                          useHttps=args.git_clone == 'https')
+    si = ScipionInstaller(installFolder, useHttps=args.git_clone == 'https')
 
     if not args.only_xmipp:
         si.createFolders()
@@ -352,7 +352,7 @@ if __name__ == '__main__':
         installScript = os.path.join(here, 'install_script.sh')
 
         with open(installScript, 'w') as f:
-            f.write(f'printenv\n{cmdStr}\n')
+            f.write('printenv\n%s\n' % cmdStr)
 
         env = {}
         for k, v in os.environ.items():
