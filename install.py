@@ -360,7 +360,7 @@ if __name__ == '__main__':
                 continue
             env[k] = v
 
-        subprocess.run(['bash', '-ex', installScript], env=env)
+        subprocess.check_call(['bash', '-ex', installScript], env=env)
 
 
 
