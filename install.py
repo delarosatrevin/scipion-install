@@ -329,7 +329,7 @@ if __name__ == '__main__':
     installFolder = args.installFolder
     if not args.only_print and os.path.exists(installFolder):
         if os.listdir(installFolder):
-            raise Exception(f"ERROR: folder '%s' is not empty." % installFolder)
+            raise Exception("ERROR: folder '%s' is not empty." % installFolder)
 
     si = ScipionInstaller(installFolder, useHttps=args.git_clone == 'https')
 
