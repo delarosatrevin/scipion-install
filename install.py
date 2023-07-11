@@ -183,7 +183,7 @@ class ScipionInstaller:
         devel = kwargs.get('devel', True)
         self.clone(name, outputDir=outputDir, branch=branch,
                    user=user, devel=devel)
-        self.pipInstall(f'-e {outputSrcDir}')
+        self.pipInstall('-e %s' % outputSrcDir)
 
     def createFolders(self):
         for d in [self.SCIPION_HOME,
