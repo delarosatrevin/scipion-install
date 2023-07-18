@@ -3,6 +3,8 @@
 import os
 import sys
 import argparse
+import subprocess
+
 
 here = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 
@@ -25,12 +27,11 @@ BUILD_JAVA = True
 
 
 class ScipionInstaller:
-
     def __init__(self, installFolder=None, onlyPrint=False, useHttps=False, buildXmipp=False):
         self.INSTALL_FOLDER = os.path.abspath(installFolder or os.getcwd())
         self.onlyPrint = onlyPrint
         self.useHttps = useHttps
-        self.buildXmipp = buildXmipp
+        self._buildXmipp = buildXmipp
         self.commands = []
 
         self.SCIPION_HOME = self.INSTALL_FOLDER
@@ -40,7 +41,6 @@ class ScipionInstaller:
             'export LD_LIBRARY_PATH=$SCIPION_HOME/conda/lib:$LD_LIBRARY_PATH'
             ]
 
-        #cls.ENV_CREATE = 'python -m virtualenv --python=python3 env'
         self.ENV_ACTIVATE = ('export PATH=%s/conda/bin:$PATH; '
                              'export LD_LIBRARY_PATH=%s/conda/lib:$LD_LIBRARY_PATH'
                              % (self.SCIPION_HOME, self.SCIPION_HOME))
@@ -64,50 +64,47 @@ class ScipionInstaller:
         'NVCC_INCLUDE': ''
     }
     PLUGINS_LIST = [
-        "scipion-em-appion",
-        "scipion-em-atsas",
-        "scipion-em-bamfordlab",
+        #"scipion-em-appion",
+        #"scipion-em-atsas",
+        #"scipion-em-bamfordlab",
         "scipion-em-bsoft",
         "scipion-em-cistem",
-        "scipion-em-cryoef",
+        #"scipion-em-cryoef",
         "scipion-em-eman2",
         "scipion-em-empiar",
         "scipion-em-emxlib",
-        "scipion-em-facilities",
-        "scipion-em-gautomatch",
-        "scipion-em-gctf",
-        "scipion-em-imagic",
+        #"scipion-em-facilities",
+        #"scipion-em-gautomatch",
+        #"scipion-em-gctf",
+        #"scipion-em-imagic",
         "scipion-em-imod",
         #"scipion-em-ispyb",
         "scipion-em-localrec",
         "scipion-em-locscale",
         "scipion-em-motioncorr",
-        "scipion-em-nysbc",
+        #"scipion-em-nysbc",
 
         "scipion-em-relion",
         "scipion-em-resmap",
         #"scipion-em-simple",
         #"scipion-em-sll",
         "scipion-em-sphire",
-        "scipion-em-spider",
+        #"scipion-em-spider",
         "scipion-em-tomo",
         "scipion-em-topaz",
         #"scipion-em-xmipp",
 
         # modelling plugins
-        "scipion-em-chimera",
-        "scipion-em-ccp4",
-        "scipion-em-phenix",
-        "scipion-em-powerfit",
+        #"scipion-em-chimera",
+        #"scipion-em-ccp4",
+        #"scipion-em-phenix",
+        #"scipion-em-powerfit",
     ]
 
     def system(self, cmd):
         """ Print and execute a command. """
         cmdR = cmd.replace(self.SCIPION_HOME, '$SCIPION_HOME')
         self.commands.append(cmdR)
-        # print(cmdR)
-        # if not self.onlyPrint:
-        #     os.system(cmd)
 
     def conda(self, args):
         """ Execute a conda command. Load the environment if needed. """
@@ -174,7 +171,6 @@ class ScipionInstaller:
 
     def installFromSource(self, name, srcSubFolder, branch=None, **kwargs):
         clean = kwargs.get('clean', False)
-
         outputDir = os.path.join(self.SCIPION_SRC, srcSubFolder)
         branch = branch or DEFAULT_BRANCH
         outputSrcDir = os.path.join(outputDir, name)
@@ -188,54 +184,70 @@ class ScipionInstaller:
         devel = kwargs.get('devel', True)
         self.clone(name, outputDir=outputDir, branch=branch,
                    user=user, devel=devel)
-        self.pipInstall('-e %s/%s' % (outputDir, name))
+        self.pipInstall('-e %s' % outputSrcDir)
 
     def createFolders(self):
         for d in [self.SCIPION_HOME,
                   self.SCIPION_SRC,
                   self.SCIPION_TMP,
-                  self.SCIPION_CONF]:
+                  self.SCIPION_CONF,
+                  self.SCIPION_EM]:
             self.createDir(d, clean=True)
 
     def installConda(self):
         # Download and install miniconda
         # https://repo.anaconda.com/miniconda/Miniconda3-py38_4.9.2-Linux-x86_64.sh
 
-        # JMRT (2021-09-08) Do no use the last miniconda installer due to
+        # JMRT (2021-09-08) Do not use the last miniconda installer due to
         # the major Python version and the pined versions of pyworkflow's requirements
         #minicondaSh = 'Miniconda3-latest-Linux-x86_64.sh'
-        minicondaSh = 'Miniconda3-py38_4.9.2-Linux-x86_64.sh'
+        isMac = sys.platform == 'darwin'
+        if isMac:
+            minicondaSh = 'Miniconda3-py38_4.9.2-MacOSX-x86_64.sh'
+        else:
+            minicondaSh = 'Miniconda3-py38_4.9.2-Linux-x86_64.sh'
+
         outputSh = os.path.join(self.SCIPION_TMP, minicondaSh)
         self.system("wget https://repo.continuum.io/miniconda/%s -O %s"
                     % (minicondaSh, outputSh))
         self.system("bash -- %s -b -p %s/conda" % (outputSh, self.SCIPION_HOME))
 
-        # Fix fonts
-        self.conda('remove tk --force -y')  # remove bad looking tk
-        tkFile = 'tk-8.6.10-h14c3975_1005.tar.bz2'
-        outputTk = os.path.join(self.SCIPION_TMP, tkFile)
-        self.system("wget https://anaconda.org/scipion/tk/8.6.10/download/linux-64/%s -O %s"
-                    % (tkFile, outputTk))
-        self.condaInstall(outputTk)
+        self.conda('update -y -n base -c defaults conda')
 
         # Install some deps via conda
-        self.condaInstall("libtiff=4.1 fftw=3.3.8 hdf5=1.12 openjdk=8 "
-                          "cudatoolkit=10.1 numpy=1.19.2 scipy "
-                          "configparser=5.0.0 "
-                          "matplotlib=3.2.2 requests=2.25.1 "
-                          "pillow=7.1.2 psutil=5.7.0",
-                          channel='conda-forge')
+        deps = ("libtiff=4.1 fftw=3.3.8 openjdk=8 numpy=1.23.0 scipy "
+                "configparser=5.0.0 matplotlib=3.2.2 requests=2.25.1 "
+                "pillow=9.2.0  psutil=5.7.0 ")
 
-        if not self.buildXmipp:
-            # If we are not building xmipp, we can already install openmpi from the conda channel
-            self.condaInstall("openmpi=4.0.4 mpi4py", channel='conda-forge')
+        # For the Xmipp building, we rely on some external libraries
+        # expected in the system, not in the conda environment:
+        # openmpi, hdf5
+        if self._buildXmipp:
+            deps += "cmake=3.26.4 "
+        else:
+            deps += "hdf5=1.12 openmpi=4.1.5 mpi4py=3.1.3 "
+
+        self.condaInstall(deps, channel='conda-forge')
+
+        # Fix TK fonts
+        if not isMac:
+            self.conda('remove tk --force -y')  # remove bad looking tk
+            tkFile = 'tk-8.6.10-h14c3975_1005.tar.bz2'
+            outputTk = os.path.join(self.SCIPION_TMP, tkFile)
+            self.system("wget https://anaconda.org/scipion/tk/8.6.10/download/linux-64/%s -O %s"
+                        % (tkFile, outputTk))
+            self.condaInstall(outputTk)
 
         # Install some required deps via pip
-        self.pipInstall('scons mrcfile empiar_depositor pathlib2 poster3 jsonschema bibtexparser==1.2.0')
+        self.pipInstall('scons mrcfile empiar_depositor pathlib2 poster3 jsonschema '
+                        'bibtexparser==1.2.0 xmltodict==0.13.0')
 
     def installCore(self):
-        for corePlugin in ['scipion-pyworkflow', 'scipion-em', 'scipion-app']:
-            self.installFromSource(corePlugin, 'core', clean=True)
+        self.installFromSource('emtools', 'core', cleean=True, user='3dem', branch='main')
+        self.installFromSource('scipion-pyworkflow', 'core', clean=True)
+        self.installFromSource('scipion-em', 'core', clean=True)
+        self.installFromSource('scipion-app', 'core', clean=True)
+        self.installFromSource('emhub', 'core', clean=True, user='3dem', branch='devel')
 
     def installPlugins(self):
         for plugin in self.PLUGINS_LIST:
@@ -249,7 +261,7 @@ class ScipionInstaller:
     def createConfig(self):
         files = os.path.join(here, 'files')
         # print("Copying config files from: ", files)
-        self.system('cp %s/scipion.bashrc %s/' % (files, self.SCIPION_HOME))
+        self.system('cp %s/bashrc %s/' % (files, self.SCIPION_HOME))
         self.system('cp %s/*.conf %s/' % (files, self.SCIPION_CONF))
         self.system('cp %s/update.py %s/' % (files, self.SCIPION_HOME))
 
@@ -258,40 +270,30 @@ class ScipionInstaller:
         self.clone('xmipp', branch=XMIPP_BRANCH, user=XMIPP_USER,
                    outputName=self.XMIPP_BUNDLE)
 
+    def writeXmippInstall(self):
         xmippInstallScript = os.path.join(self.XMIPP_BUNDLE, 'install_xmipp.sh')
         with open(xmippInstallScript, 'w') as f:
             f.write("""
             %s && cd %s && python --version
-
-            echo "\n>>> ./xmipp get_devel_sources"
             ./xmipp get_devel_sources %s
-
-            echo "\n>>> ./xmipp config noAsk"
-            ./xmipp config noAsk
-
-            echo "\n>>> ./xmipp get_dependencies"
             ./xmipp get_dependencies
-
-            echo "\n>>> python ./xmipp compile"
-            python ./xmipp compile %d
-            python ./xmipp install
+            ./xmipp config noAsk
+            ./xmipp check_config
+            # Disable OPENCV in xmipp.conf
+            ./xmipp compile %d
+            ./xmipp install
             """ % (self.ENV_ACTIVATE, self.XMIPP_BUNDLE, XMIPP_BRANCH, J))
 
-        self.system('bash -ex %s' % xmippInstallScript)
+        print("Run the following command: \n",
+              '>>> bash -ex %s' % xmippInstallScript)
 
-    def installXmipp(self, build=False):
+    def installXmipp(self):
         self.createDir(self.XMIPP_BUNDLE, clean=True)
-
-        if build:
-            self.buildXmipp()
-            # Install openmpi now, to not interfere with Xmipp compilation
-            self.condaInstall("openmpi=4.0.4", channel='conda-forge')
-        else:
-            xmippBin = 'xmipp-v3.20.07.tgz'
-            self.system('cd %s; '
-                      'wget https://github.com/delarosatrevin/scipion-install-bin/raw/master/%s; '
-                      'tar -xzf %s' % (self.XMIPP_BUNDLE, xmippBin, xmippBin))
-
+        # xmippBin = 'xmipp-v3.20.07.tgz'
+        xmippBin = 'xmipp-v3.23.07-b01.tgz'
+        self.system('cd %s; '
+                    'wget https://github.com/delarosatrevin/xmipp-binaries/raw/main/%s; '
+                    'tar -xzf %s' % (self.XMIPP_BUNDLE, xmippBin, xmippBin))
 
 
 def get_parser():
@@ -302,24 +304,17 @@ def get_parser():
 
     add('installFolder', metavar='INSTALL_FOLDER',
         help='Installation folder.')
-    add('--https', action='store_true',
-        help='Use https URL to retrieve repositories')
+    add('--git_clone', choices=['https', 'ssh'], default='https',
+        help="What method to use for the 'git clone' command")
     add('--only_print', action='store_true',
         help='Only print installation commands')
-    add('--only_xmipp', action='store_true',
-        help='Only install Xmipp. ')
     add('--build_xmipp', action='store_true',
-        help='Build Xmipp (usually to generate a binary)')
+        help='Build a conda environment used to compile Xmipp and generate'
+             'binary files to use in Scipion installation.')
     add('--skip_xmipp', action='store_true',
         help='Install Scipion without Xmipp (useful for Mac)')
-
-    # g = parser.add_mutually_exclusive_group()
-    # g.add_argument('--output_text', action='store_true', help="Write all set items to a text file.")
-    # g.add_argument('--print', action='store_true', help="Print all set's item files to a text file.")
-    # g.add_argument('--copy', action='store_true', help="Copy all set's item files to a text file.")
-
-    #
-    # add('output', metavar='OUTPUT', help='Output file or folder.')
+    add('--skip_plugins', action='store_true',
+        help="Do not install the plugins, just core ones. ")
 
     return parser
 
@@ -327,19 +322,26 @@ def get_parser():
 if __name__ == '__main__':
     args = get_parser().parse_args()
 
-    si = ScipionInstaller(args.installFolder,
-                          useHttps=args.https)
+    installFolder = args.installFolder
+    if not args.only_print and os.path.exists(installFolder):
+        if os.listdir(installFolder):
+            raise Exception("ERROR: folder '%s' is not empty." % installFolder)
 
+    si = ScipionInstaller(installFolder, useHttps=args.git_clone == 'https',
+                          buildXmipp=args.build_xmipp)
 
-    if not args.only_xmipp:
-        si.createFolders()
-        si.installConda()
+    si.createFolders()
+    si.installConda()
+    si.createConfig()
+
+    if args.build_xmipp:
+        si.buildXmipp()
+    else:
         si.installCore()
-        si.installPlugins()
-        si.createConfig()
-
-    if not args.skip_xmipp:
-        si.installXmipp(args.build_xmipp)
+        if not args.skip_plugins:
+            si.installPlugins()
+        if not args.skip_xmipp:
+            si.installXmipp()
 
     cmdStr = '\n'.join(si.commands)
 
@@ -349,9 +351,17 @@ if __name__ == '__main__':
         installScript = os.path.join(here, 'install_script.sh')
 
         with open(installScript, 'w') as f:
-            f.write(cmdStr + '\n')
+            f.write('printenv\n%s\n' % cmdStr)
 
-        os.system('bash -ex %s' % installScript)
+        env = {}
+        for k, v in os.environ.items():
+            if k.startswith('CONDA'):
+                continue
+            env[k] = v
+
+        subprocess.check_call(['bash', '-ex', installScript], env=env)
+        if args.build_xmipp:
+            si.writeXmippInstall()
 
 
 
