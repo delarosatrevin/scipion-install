@@ -2,27 +2,44 @@
 scipion-install
 ===============
 
-Utility repository to help installing Scipion from scratch, either using Xmipp pre-compiled binaries or builing it from source.
+Utility script and files to smoothly  install Scipion on Linux/MacOS.
+
+NO COMPILATION REQUIRED!!!
+
+It will download a Miniconda installer and install core plugins and some EM plugins.
+It will also ensure compatibility in library versions with previously compiled Xmipp binary.
+
+Additionally, EMHub will be also installed.
+
+
+Requirements
+------------
+* **git** to clone install repository and other plugins
+* **python** to run the install script
 
 
 Installing Scipion
 ------------------
 
-The main goal of this tools is to install Scipion as simple as possible.
-It should not required any admin privileges in your computer neither compiler tools.
+It should be very easy to install Scipion following these steps. Just be patient
+for conda to resolve dependencies and environment libraries. Installation should not
+require any admin privileges in your computer or compiler tools.
+
+Replace `SCIPION_FOLDER` in the following command with the path where you want to 
+install Scipion.
 
 .. code-block:: bash
 
     git clone https://github.com/delarosatrevin/scipion-install.git
     cd scipion-install 
-    python ./install.py SCIPION_FOLDER --https
-    
-After this you should have a basic Scipion 3.0 installation in SCIPION_FOLDER.
-You can load Scipion environment by: 
+    python ./install.py SCIPION_FOLDER
+
+After this, you should have a basic Scipion 3.0 installation in SCIPION_FOLDER.
+You can load the Scipion environment by: 
 
 .. code-block:: bash
 
-    . SCIPION_FOLDER/scipion.bashrc 
+    source SCIPION_FOLDER/bashrc
     
 Then you can install some binaries to work with:
 
@@ -30,12 +47,12 @@ Then you can install some binaries to work with:
 
     scipion installb cistem cryolo cryolo_model ctffind4 gctf motioncor2
     
-It is recommended that you install Relion 3.1 separately and then link it in the EM folder:
+It is recommended that you install Relion separately and then link it in the EM folder:
 
 .. code-block:: bash
 
     cd SCIPION_FOLDER/EM
-    ln -s RELION_3.1_FOLDER relion-3.1.0
+    ln -s RELION_4.0_FOLDER relion-4.0
     
 And then run some tests to validate the installation:
 
@@ -49,33 +66,17 @@ Development installation
 ------------------------
 
 A development installation is very similar that the previous one, since it install the plugins from the source code.
-Just avoid the **--https** option if you want to be able to commit changes to the source code repositories.
-
-
-Building Xmipp binaries
------------------------
-
-You should not need to worry about this section, it is more a note to myself.
-I build the Xmipp binaries in my Ubuntu 18.04.4 workstation with some specific modules versions.
+Just pass **--git_clone ssh* to use that method for cloning from GitHub. The installation command will be:
 
 .. code-block:: bash
 
-    module load cuda/10.1.2 gcc/8.1 openmpi/4.0.4
-    python ./install.py SCIPION_FOLDER --build-xmipp
-    
-Then I just create a tar file with the Xmipp build directory and commit it to the scipion-install-bin repo:
+    python ./install.py SCIPION_FOLDER --git_clone ssh
 
-.. code-block:: bash
 
-    cd SCIPION_FOLDER/source/xmipp-bundle
-    tar -cvzf xmipp-v3.20.07.tgz build
-    mv xmipp-v3.20.07.tgz  ~work/development/scipion/scipion-install-bin/
-    cd ~work/development/scipion/scipion-install-bin/
-    git add xmipp-v3.20.07.tgz
-    git commit -m "New Xmipp binary file" 
-    
-  
+Xmipp binaries
+--------------
 
- 
+Xmipp binaries used in the installation are pre-built and hosted in the following repository:
 
+https://github.com/delarosatrevin/xmipp-binaries
 
