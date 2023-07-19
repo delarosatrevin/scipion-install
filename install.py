@@ -225,7 +225,7 @@ class ScipionInstaller:
         if self._buildXmipp:
             deps += "cmake=3.26.4 "
         else:
-            deps += "hdf5=1.12 openmpi=4.1.5 mpi4py=3.1.3 "
+            deps += "openmpi=4.1.5 mpi4py=3.1.3 "  # hdf5=1.12.1
 
         self.condaInstall(deps, channel='conda-forge')
 
