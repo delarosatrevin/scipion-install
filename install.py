@@ -290,7 +290,7 @@ class ScipionInstaller:
     def installXmipp(self):
         self.createDir(self.XMIPP_BUNDLE, clean=True)
         # xmippBin = 'xmipp-v3.20.07.tgz'
-        xmippBin = 'xmipp-v3.23.07-b01.tgz'
+        xmippBin = 'xmipp-v3.23.07-b02.tgz'
         self.system('cd %s; '
                     'wget https://github.com/delarosatrevin/xmipp-binaries/raw/main/%s; '
                     'tar -xzf %s' % (self.XMIPP_BUNDLE, xmippBin, xmippBin))
