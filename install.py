@@ -216,8 +216,8 @@ class ScipionInstaller:
 
         # Install some deps via conda
         deps = ("libtiff=4.1 fftw=3.3.8 openjdk=8 numpy=1.23.0 scipy "
-                "configparser=5.0.0 matplotlib=3.2.2 requests=2.25.1 "
-                "pillow=9.2.0  psutil=5.7.0 ")
+                "configparser=5.0.0 matplotlib=3.2.2 requests=2.28.1 "
+                "pillow=9.2.0  psutil=5.9.1 ")
 
         # For the Xmipp building, we rely on some external libraries
         # expected in the system, not in the conda environment:
